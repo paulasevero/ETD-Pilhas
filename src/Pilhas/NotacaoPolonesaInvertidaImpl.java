@@ -1,6 +1,7 @@
 package Pilhas;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,27 +30,46 @@ public class NotacaoPolonesaInvertidaImpl implements NotacaoPolonesaInvertida {
 
     @Override
     public String imprimirExpressao() {
-        char[] caracteres;
-        caracteres = this.expressao.toCharArray();
-        Stack operadores = new Stack();
+        char[] caracteres = this.expressao.toCharArray();
+        String resultado = "";
+        Stack<Operador> operadores = new Stack();
+        Operador temp = Operador.ADICAO;
         for (char caractere : caracteres) {
-            if (this.isOperador(caractere)) {
-                
+            
+            Operador operador = this.getOperador(caractere).size() > 0
+                                ? this.getOperador(caractere).get(0) : null;
+            
+            if (operador == null) {
+                resultado = resultado + caractere;
+            } else {
+                if (operador.getPrioridade() >= temp.getPrioridade()) {
+                    operadores.add(operador);
+                } else {
+                    resultado = resultado.concat(this.descarregarPilha(operadores));
+                    operadores.add(operador);
+                }
+                temp = operador;
             }
         }
-        return null;
+        resultado = resultado.concat(this.descarregarPilha(operadores));
+        resultado = resultado.replaceAll("\\(", "");
+        resultado = resultado.replaceAll("\\)", "");
+        return resultado;
     }
 
-    private Operador getOperador(char caractere) {
+    private List<Operador> getOperador(char caractere) {
         return Arrays.asList(Operador.values())
                 .stream()
                 .filter(operador -> operador.getForma() == caractere)
-                .collect(toList())
-                .get(0);
+                .collect(toList());
     }
 
-    private boolean isOperador(char caractere) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    private String descarregarPilha(Stack<Operador> pilha) {
+        String retorno = "";
+        while (pilha.size() > 0) {
+            retorno = retorno + pilha.pop().getForma();
+        }
+        return retorno;
     }
 
 }
