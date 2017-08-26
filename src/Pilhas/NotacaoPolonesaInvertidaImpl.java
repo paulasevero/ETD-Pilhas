@@ -1,5 +1,6 @@
 package Pilhas;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
@@ -9,7 +10,7 @@ import static java.util.stream.Collectors.toList;
 
 public class NotacaoPolonesaInvertidaImpl implements NotacaoPolonesaInvertida {
 
-    String expressao;
+    public String expressao, resultado = "";
 
     @Override
     public void inserirExpressao(String expressao) {
@@ -30,42 +31,16 @@ public class NotacaoPolonesaInvertidaImpl implements NotacaoPolonesaInvertida {
 
     @Override
     public String imprimirExpressao() {
-        String resultado = "";
-        if (this.expressao.contains("(")) {
-            String[] partesDaExpressao = this.expressao.split("\\(");
-            for (String semParentesesAbertos : partesDaExpressao) {
-                if (semParentesesAbertos.isEmpty()) {
-                    continue;
-                }
-                String conteudoParenteses = semParentesesAbertos.split("\\)")[0];
-                resultado = resultado + this.resolverParenteses(conteudoParenteses);
-                this.expressao = this.expressao.replace(conteudoParenteses, "");
-                this.expressao = this.expressao.replaceAll("\\(", "");
-                this.expressao = this.expressao.replaceAll("\\)", "");
-            }
+        this.resultado = "";
+        while (this.expressao.contains("(")) {
+            List<String> conteudosDosParenteses = this.getConteudoParenteses(this.expressao);
+            conteudosDosParenteses.stream().forEach(conteudo -> {
+                this.realizarNPI(conteudo);
+                this.limparExpressao(conteudo);
+            });
         }
-        char[] caracteres = this.expressao.toCharArray();
-        Stack<Operador> operadores = new Stack();
-        Operador temp = Operador.ADICAO;
-        for (char caractere : caracteres) {
-
-            Operador operador = this.getOperador(caractere).size() > 0
-                    ? this.getOperador(caractere).get(0) : null;
-
-            if (operador == null) {
-                resultado = resultado + caractere;
-            } else {
-                if (operador.getPrioridade() >= temp.getPrioridade()) {
-                    operadores.add(operador);
-                } else {
-                    resultado = resultado.concat(this.descarregarPilha(operadores));
-                    operadores.add(operador);
-                }
-                temp = operador;
-            }
-        }
-        resultado = resultado.concat(this.descarregarPilha(operadores));
-        return resultado;
+        this.realizarNPI(this.expressao);
+        return this.resultado;
     }
 
     private List<Operador> getOperador(char caractere) {
@@ -83,30 +58,44 @@ public class NotacaoPolonesaInvertidaImpl implements NotacaoPolonesaInvertida {
         return retorno;
     }
 
-    private String resolverParenteses(String dentroDoParenteses) {
-        char[] caracteres = dentroDoParenteses.toCharArray();
-        String resultado = "";
+    private List<String> getConteudoParenteses(String expressao) {
+        List<String> retorno = new ArrayList<>();
+        String[] partesDaExpressao = expressao.split("\\(");
+        partesDaExpressao = Arrays.copyOfRange(partesDaExpressao, 1, partesDaExpressao.length);
+        for (String semParentesesAbertos : partesDaExpressao) {
+            retorno.add(semParentesesAbertos.split("\\)")[0]);
+        }
+        return retorno;
+    }
+
+    private void limparExpressao(String conteudoParenteses) {
+        this.expressao = this.expressao
+                .replace(conteudoParenteses, "")
+                .replaceAll("\\(", "")
+                .replaceAll("\\)", "");
+    }
+
+    private void realizarNPI(String expressaoParametro) {
+        char[] caracteres = expressaoParametro.toCharArray();
         Stack<Operador> operadores = new Stack();
         Operador temp = Operador.ADICAO;
         for (char caractere : caracteres) {
-
             Operador operador = this.getOperador(caractere).size() > 0
                     ? this.getOperador(caractere).get(0) : null;
 
             if (operador == null) {
-                resultado = resultado + caractere;
+                this.resultado = this.resultado + caractere;
             } else {
                 if (operador.getPrioridade() >= temp.getPrioridade()) {
                     operadores.add(operador);
                 } else {
-                    resultado = resultado.concat(this.descarregarPilha(operadores));
+                    this.resultado = this.resultado.concat(this.descarregarPilha(operadores));
                     operadores.add(operador);
                 }
                 temp = operador;
             }
         }
-        resultado = resultado.concat(this.descarregarPilha(operadores));
-        return resultado;
+        this.resultado = this.resultado.concat(this.descarregarPilha(operadores));
     }
 
 }
