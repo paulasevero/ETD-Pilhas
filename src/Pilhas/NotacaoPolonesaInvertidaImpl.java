@@ -30,15 +30,28 @@ public class NotacaoPolonesaInvertidaImpl implements NotacaoPolonesaInvertida {
 
     @Override
     public String imprimirExpressao() {
-        char[] caracteres = this.expressao.toCharArray();
         String resultado = "";
+        if (this.expressao.contains("(")) {
+            String[] partesDaExpressao = this.expressao.split("\\(");
+            for (String semParentesesAbertos : partesDaExpressao) {
+                if (semParentesesAbertos.isEmpty()) {
+                    continue;
+                }
+                String conteudoParenteses = semParentesesAbertos.split("\\)")[0];
+                resultado = resultado + this.resolverParenteses(conteudoParenteses);
+                this.expressao = this.expressao.replace(conteudoParenteses, "");
+                this.expressao = this.expressao.replaceAll("\\(", "");
+                this.expressao = this.expressao.replaceAll("\\)", "");
+            }
+        }
+        char[] caracteres = this.expressao.toCharArray();
         Stack<Operador> operadores = new Stack();
         Operador temp = Operador.ADICAO;
         for (char caractere : caracteres) {
-            
+
             Operador operador = this.getOperador(caractere).size() > 0
-                                ? this.getOperador(caractere).get(0) : null;
-            
+                    ? this.getOperador(caractere).get(0) : null;
+
             if (operador == null) {
                 resultado = resultado + caractere;
             } else {
@@ -52,8 +65,6 @@ public class NotacaoPolonesaInvertidaImpl implements NotacaoPolonesaInvertida {
             }
         }
         resultado = resultado.concat(this.descarregarPilha(operadores));
-        resultado = resultado.replaceAll("\\(", "");
-        resultado = resultado.replaceAll("\\)", "");
         return resultado;
     }
 
@@ -70,6 +81,32 @@ public class NotacaoPolonesaInvertidaImpl implements NotacaoPolonesaInvertida {
             retorno = retorno + pilha.pop().getForma();
         }
         return retorno;
+    }
+
+    private String resolverParenteses(String dentroDoParenteses) {
+        char[] caracteres = dentroDoParenteses.toCharArray();
+        String resultado = "";
+        Stack<Operador> operadores = new Stack();
+        Operador temp = Operador.ADICAO;
+        for (char caractere : caracteres) {
+
+            Operador operador = this.getOperador(caractere).size() > 0
+                    ? this.getOperador(caractere).get(0) : null;
+
+            if (operador == null) {
+                resultado = resultado + caractere;
+            } else {
+                if (operador.getPrioridade() >= temp.getPrioridade()) {
+                    operadores.add(operador);
+                } else {
+                    resultado = resultado.concat(this.descarregarPilha(operadores));
+                    operadores.add(operador);
+                }
+                temp = operador;
+            }
+        }
+        resultado = resultado.concat(this.descarregarPilha(operadores));
+        return resultado;
     }
 
 }
